@@ -1,0 +1,15 @@
+# 创建会话记忆表结构
+create table spring_ai_chat_memory
+(
+    conversation_id varchar(36) not null comment '会话id',
+    content         longtext    not null comment '会话内容',
+    type            varchar(10) not null comment '消息类容（USER/ASSISTANT/SYSTEM/TOOL）',
+    `timestamp`     datetime    not null default current_timestamp comment '创建时间',
+    constraint chk_type check (type in ('USER', 'ASSISTANT', 'SYSTEM', 'TOOL'))
+) engine = InnoDB
+  default charset = utf8mb4
+  collate = utf8mb4_unicode_ci comment ='会话记录表';
+
+
+# 为conversation_id和`timestamp`建立索引
+create index spring_ai_chat_memory_conversation_id_timestamp_idx on spring_ai_chat_memory (conversation_id, `timestamp` desc);

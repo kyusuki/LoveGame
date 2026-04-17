@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: gameAI
+  web:
+    resources:
+      static-locations: classpath:/static/,classpath:/public/,file:./picture/
+  ai:
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: sk-cb4d7e4d8ba5411ab5557563969224fa
+      chat:
+        options:
+          model: qwen-max-latest
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/ai_chat?useSSL=false&serverTimezone=UTC
+    username: root
+    password: 666666
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+Logging:
+  level:
+    org.springframework.ai.chat.client.advisor: debug
+    com.gao.gameai: debug

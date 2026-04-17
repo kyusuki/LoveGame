@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>恋爱和解游戏</title>
+  <style>
+    :root {
+      --bg-0: #04070b;
+      --bg-1: #0a111a;
+      --bg-2: #111a24;
+      --line: #273445;
+      --text: #e8edf3;
+      --muted: #9eb0c3;
+      --accent: #67f5b8;
+      --accent-2: #2ad6ff;
+      --bubble-other: #1a2432;
+      --bubble-self: #145b4b;
+      --danger: #ff7a7a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+      background:
+        radial-gradient(80vw 80vw at -10% -20%, #1a2d43 0%, transparent 65%),
+        radial-gradient(60vw 60vw at 110% 10%, #143127 0%, transparent 60%),
+        linear-gradient(160deg, var(--bg-0), var(--bg-1) 48%, #0b1520);
+      overflow: hidden;
+    }
+
+    .page {
+      width: min(960px, 100%);
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 24px 16px;
+      display: grid;
+    }
+
+    .panel {
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+    }
+
+    .start-screen {
+      place-self: center;
+      width: min(760px, 100%);
+      padding: 40px 22px;
+      text-align: center;
+      animation: rise-in 0.7s ease;
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(30px, 6vw, 54px);
+      letter-spacing: 3px;
+      color: #e9fffa;
+      text-shadow: 0 0 24px rgba(103, 245, 184, 0.3);
+    }
+
+    .subtitle {
+      margin: 16px auto 34px;
+      max-width: 560px;
+      line-height: 1.8;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .start-btn {
+      cursor: pointer;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 34px;
+      color: #06140f;
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      box-shadow: 0 10px 30px rgba(42, 214, 255, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 38px rgba(42, 214, 255, 0.42);
+    }
+
+    .character-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 7, 12, 0.82);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 20;
+    }
+
+    .character-modal.show {
+      display: flex;
+      animation: fade-in 0.25s ease;
+    }
+
+    .character-box {
+      width: min(880px, 100%);
+      padding: 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(170deg, #0d1823, #0a131d);
+    }
+
+    .character-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .character-head h2 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 1px;
+    }
+
+    .close-btn {
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    .character-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .character-card {
+      border: 1px solid #263444;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #0b1520;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+      opacity: 0;
+      padding: 14px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      animation: slide-up 0.35s ease forwards;
+    }
+
+    .character-card:hover {
+      transform: translateY(-3px);
+      border-color: #4ec9a2;
+    }
+
+    .character-card img {
+      width: 92px;
+      height: 92px;
+      object-fit: cover;
+      display: block;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .character-card p {
+      margin: 0;
+      text-align: center;
+      font-weight: 600;
+      color: #d9edf6;
+    }
+
+    .chat-screen {
+      display: none;
+      grid-template-rows: auto 1fr auto;
+      height: calc(100vh - 48px);
+      overflow: hidden;
+      animation: rise-in 0.4s ease;
+    }
+
+    .chat-screen.show {
+      display: grid;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+    }
+
+    .chat-header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+
+    .chat-header .name {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .chat-header .desc {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .message-list {
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), transparent 25%);
+    }
+
+    .message-row {
+      display: flex;
+      gap: 10px;
+      max-width: 85%;
+      align-items: flex-start;
+      animation: slide-up 0.2s ease;
+    }
+
+    .message-row.self {
+      margin-left: auto;
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .bubble-wrap {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .bubble-name {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .bubble {
+      line-height: 1.65;
+      font-size: 14px;
+      border-radius: 12px;
+      padding: 10px 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message-row.other .bubble {
+      background: var(--bubble-other);
+      border: 1px solid #29384b;
+      border-top-left-radius: 4px;
+    }
+
+    .message-row.self .bubble {
+      background: var(--bubble-self);
+      border: 1px solid #27725e;
+      border-top-right-radius: 4px;
+    }
+
+    .composer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      background: rgba(6, 11, 18, 0.85);
+    }
+
+    .composer input {
+      width: 100%;
+      border: 1px solid #2b3d50;
+      background: #0f1924;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .composer input:focus {
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(42, 214, 255, 0.12);
+    }
+
+    .send-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 0 18px;
+      background: linear-gradient(90deg, #59e9b0, #1fc3f5);
+      color: #03120d;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .tip {
+      text-align: center;
+      font-size: 12px;
+      color: var(--danger);
+      min-height: 18px;
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        padding: 8px;
+      }
+
+      .chat-screen {
+        height: calc(100vh - 16px);
+      }
+
+      .character-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes rise-in {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slide-up {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <section class="panel start-screen" id="startScreen">
+    <h1 class="title">恋爱和解模拟器</h1>
+    <p class="subtitle">点击开始后，选择你要对话的对象头像，进入类似微信的聊天界面。你的每一句话都会直接走后端 AI 游戏逻辑，争取把原谅值拉到 100。</p>
+    <button class="start-btn" id="startBtn">启动游戏</button>
+    <p class="tip" id="tip"></p>
+  </section>
+
+  <section class="panel chat-screen" id="chatScreen">
+    <header class="chat-header">
+      <img id="chatHeaderAvatar" src="" alt="头像">
+      <div>
+        <div class="name" id="chatHeaderName"></div>
+        <div class="desc">在线 · 恋爱和解模式</div>
+      </div>
+    </header>
+
+    <main class="message-list" id="messageList"></main>
+
+    <form class="composer" id="composer">
+      <input id="promptInput" type="text" placeholder="说点让她开心的话..." autocomplete="off" maxlength="400">
+      <button class="send-btn" id="sendBtn" type="submit">发送</button>
+    </form>
+  </section>
+</div>
+
+<div class="character-modal" id="characterModal">
+  <div class="character-box panel">
+    <div class="character-head">
+      <h2>选择对话对象</h2>
+      <button class="close-btn" id="closeModalBtn">关闭</button>
+    </div>
+    <div class="character-grid" id="characterGrid"></div>
+  </div>
+</div>
+
+<script>
+  const characters = [
+    { name: "雯雯", image: "/0be38ac097ebb3cf7a37062d515b5df7eec77c33706a6751.webp" },
+    { name: "慧慧", image: "/1fb82fd85512e0ae5100be3559a32b04f678fa6c9c316929.webp" },
+    { name: "月月", image: "/4abe0e9eba35d0bbd2bb087bea4b774c5879e361a677ad25.webp" },
+    { name: "年年", image: "/6e2f394de618ebcb44bb118fd882ede548169aef2db580bc.webp" },
+    { name: "柔柔", image: "/8751833c772d28df4f63d4d04a088ddf77896070e58087f2.webp" },
+    { name: "宁宁", image: "/9f23851c93321e6d23b6684fbe625a3bbd4d6b200f78c0fc.webp" },
+    { name: "苏苏", image: "/a13844ac6a6e71156d211c97d7186812a9abb5961e7f6101.webp" },
+    { name: "萌萌", image: "/ae9999b4896000c392380fe09a7f8dfee6261af81fb2ea75.webp" },
+    { name: "希希", image: "/be019410b23798132d150d832f26f65c82e660a6adb21976.webp" }
+  ];
+
+  const userAvatar = "https://api.dicebear.com/9.x/lorelei/svg?seed=player";
+
+  const startBtn = document.getElementById("startBtn");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const characterModal = document.getElementById("characterModal");
+  const characterGrid = document.getElementById("characterGrid");
+  const startScreen = document.getElementById("startScreen");
+  const chatScreen = document.getElementById("chatScreen");
+  const chatHeaderAvatar = document.getElementById("chatHeaderAvatar");
+  const chatHeaderName = document.getElementById("chatHeaderName");
+  const messageList = document.getElementById("messageList");
+  const composer = document.getElementById("composer");
+  const promptInput = document.getElementById("promptInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const tip = document.getElementById("tip");
+
+  let selected = null;
+  let chatId = "";
+  let sending = false;
+
+  function createChatId(name) {
+    return "chat-" + name + "-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
+  }
+
+  function openModal() {
+    characterModal.classList.add("show");
+  }
+
+  function closeModal() {
+    characterModal.classList.remove("show");
+  }
+
+  function scrollToBottom() {
+    messageList.scrollTop = messageList.scrollHeight;
+  }
+
+  function appendMessage({ role, name, avatar, text }) {
+    const row = document.createElement("div");
+    row.className = "message-row " + (role === "self" ? "self" : "other");
+
+    const avatarEl = document.createElement("img");
+    avatarEl.className = "avatar";
+    avatarEl.src = avatar;
+    avatarEl.alt = name;
+
+    const wrap = document.createElement("div");
+    wrap.className = "bubble-wrap";
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "bubble-name";
+    nameEl.textContent = name;
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text || "";
+
+    wrap.appendChild(nameEl);
+    wrap.appendChild(bubble);
+    row.appendChild(avatarEl);
+    row.appendChild(wrap);
+
+    messageList.appendChild(row);
+    scrollToBottom();
+    return bubble;
+  }
+
+  function resetTip(msg = "") {
+    tip.textContent = msg;
+  }
+
+  function setSendingStatus(value) {
+    sending = value;
+    sendBtn.disabled = value;
+    promptInput.disabled = value;
+  }
+
+  async function sendPrompt(promptText) {
+    if (!selected || !promptText || sending) {
+      return;
+    }
+
+    setSendingStatus(true);
+    resetTip("");
+
+    appendMessage({
+      role: "self",
+      name: "我",
+      avatar: userAvatar,
+      text: promptText
+    });
+
+    const botBubble = appendMessage({
+      role: "other",
+      name: selected.name,
+      avatar: selected.image,
+      text: ""
+    });
+
+    try {
+      const params = new URLSearchParams({ prompt: promptText, chatId });
+      const response = await fetch("/ai/game?" + params.toString(), { method: "GET" });
+
+      if (!response.ok || !response.body) {
+        throw new Error("接口请求失败");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        const chunk = decoder.decode(value, { stream: true });
+        fullText += chunk;
+        botBubble.innerHTML = fullText;
+        scrollToBottom();
+      }
+    } catch (error) {
+      botBubble.textContent = "消息发送失败，请稍后重试。";
+      resetTip("网络异常或后端未启动，请检查服务状态。");
+    } finally {
+      setSendingStatus(false);
+      promptInput.focus();
+    }
+  }
+
+  function enterChat(character) {
+    selected = character;
+    chatId = createChatId(character.name);
+    chatHeaderAvatar.src = character.image;
+    chatHeaderName.textContent = character.name;
+    startScreen.style.display = "none";
+    chatScreen.classList.add("show");
+    messageList.innerHTML = "";
+
+    appendMessage({
+      role: "other",
+      name: character.name,
+      avatar: character.image,
+      text: "游戏开始了，想好怎么哄我了吗？"
+    });
+
+    closeModal();
+    promptInput.focus();
+  }
+
+  function renderCharacters() {
+    characters.forEach((item, index) => {
+      const card = document.createElement("div");
+      card.className = "character-card";
+      card.style.animationDelay = (index * 0.04) + "s";
+
+      const img = document.createElement("img");
+      img.src = item.image;
+      img.alt = item.name;
+
+      const name = document.createElement("p");
+      name.textContent = item.name;
+
+      card.appendChild(img);
+      card.appendChild(name);
+      card.addEventListener("click", () => enterChat(item));
+      characterGrid.appendChild(card);
+    });
+  }
+
+  startBtn.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModal);
+  characterModal.addEventListener("click", (event) => {
+    if (event.target === characterModal) {
+      closeModal();
+    }
+  });
+
+  composer.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const text = promptInput.value.trim();
+    if (!text) {
+      return;
+    }
+    promptInput.value = "";
+    sendPrompt(text);
+  });
+
+  renderCharacters();
+</script>
+</body>
+</html>
